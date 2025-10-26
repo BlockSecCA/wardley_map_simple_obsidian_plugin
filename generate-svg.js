@@ -310,7 +310,11 @@ function spreadOverlappingComponents(components) {
 	for (const [key, group] of groups) {
 		if (group.length > 1) {
 			const baseX = group[0].x;
-			const spreadRange = 0.08;
+
+			// Adaptive spread based on group size - more components = wider spread
+			const baseSpread = 0.12;
+			const spreadMultiplier = Math.max(1, group.length / 3);
+			const spreadRange = baseSpread * spreadMultiplier;
 
 			group.forEach((comp, index) => {
 				const offset = (index - (group.length - 1) / 2) * (spreadRange / Math.max(group.length - 1, 1));

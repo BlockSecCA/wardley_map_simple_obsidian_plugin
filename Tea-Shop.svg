@@ -21,12 +21,12 @@
 <text x="400" y="30" text-anchor="middle" font-size="18" font-weight="bold" fill="#000">Tea Shop</text>
 <line x1="315" y1="60" x2="485" y2="148" stroke="#4A90E2" stroke-width="2" marker-end="url(#arrowhead)"/>
 <line x1="655" y1="60" x2="485" y2="148" stroke="#4A90E2" stroke-width="2" marker-end="url(#arrowhead)"/>
-<line x1="485" y1="148" x2="627.8" y2="412" stroke="#4A90E2" stroke-width="2" marker-end="url(#arrowhead)"/>
-<line x1="485" y1="148" x2="645.9333333333334" y2="412" stroke="#4A90E2" stroke-width="2" marker-end="url(#arrowhead)"/>
+<line x1="485" y1="148" x2="600.6" y2="412" stroke="#4A90E2" stroke-width="2" marker-end="url(#arrowhead)"/>
+<line x1="485" y1="148" x2="636.8666666666667" y2="412" stroke="#4A90E2" stroke-width="2" marker-end="url(#arrowhead)"/>
 <line x1="485" y1="148" x2="655" y2="236" stroke="#4A90E2" stroke-width="2" marker-end="url(#arrowhead)"/>
-<line x1="655" y1="236" x2="664.0666666666666" y2="412" stroke="#4A90E2" stroke-width="2" marker-end="url(#arrowhead)"/>
+<line x1="655" y1="236" x2="673.1333333333333" y2="412" stroke="#4A90E2" stroke-width="2" marker-end="url(#arrowhead)"/>
 <line x1="655" y1="236" x2="315" y2="324" stroke="#4A90E2" stroke-width="2" marker-end="url(#arrowhead)"/>
-<line x1="315" y1="324" x2="682.2" y2="412" stroke="#4A90E2" stroke-width="2" marker-end="url(#arrowhead)"/>
+<line x1="315" y1="324" x2="709.4" y2="412" stroke="#4A90E2" stroke-width="2" marker-end="url(#arrowhead)"/>
 <line x1="315" y1="324" x2="485" y2="412" stroke="#9B59B6" stroke-width="2" stroke-dasharray="5,5" marker-end="url(#arrowhead-evolution)"/>
 <circle cx="315" cy="60" r="8" fill="#4ECDC4" stroke="#0B7285" stroke-width="2"/>
 <text x="315" y="47" text-anchor="middle" font-size="12" font-weight="bold" fill="#000">Business</text>
@@ -34,18 +34,18 @@
 <text x="655" y="47" text-anchor="middle" font-size="12" font-weight="bold" fill="#000">Public</text>
 <circle cx="485" cy="148" r="8" fill="#45B7D1" stroke="#1971C2" stroke-width="2"/>
 <text x="485" y="135" text-anchor="middle" font-size="12" font-weight="bold" fill="#000">Cup of Tea</text>
-<circle cx="627.8" cy="412" r="8" fill="#96CEB4" stroke="#2F9E44" stroke-width="2"/>
-<text x="627.8" y="399" text-anchor="middle" font-size="12" font-weight="bold" fill="#000">Cup</text>
-<circle cx="645.9333333333334" cy="412" r="8" fill="#96CEB4" stroke="#2F9E44" stroke-width="2"/>
-<text x="645.9333333333334" y="399" text-anchor="middle" font-size="12" font-weight="bold" fill="#000">Tea</text>
+<circle cx="600.6" cy="412" r="8" fill="#96CEB4" stroke="#2F9E44" stroke-width="2"/>
+<text x="600.6" y="399" text-anchor="middle" font-size="12" font-weight="bold" fill="#000">Cup</text>
+<circle cx="636.8666666666667" cy="412" r="8" fill="#96CEB4" stroke="#2F9E44" stroke-width="2"/>
+<text x="636.8666666666667" y="399" text-anchor="middle" font-size="12" font-weight="bold" fill="#000">Tea</text>
 <circle cx="655" cy="236" r="8" fill="#96CEB4" stroke="#2F9E44" stroke-width="2"/>
 <text x="655" y="223" text-anchor="middle" font-size="12" font-weight="bold" fill="#000">Hot Water</text>
-<circle cx="664.0666666666666" cy="412" r="8" fill="#96CEB4" stroke="#2F9E44" stroke-width="2"/>
-<text x="664.0666666666666" y="399" text-anchor="middle" font-size="12" font-weight="bold" fill="#000">Water</text>
+<circle cx="673.1333333333333" cy="412" r="8" fill="#96CEB4" stroke="#2F9E44" stroke-width="2"/>
+<text x="673.1333333333333" y="399" text-anchor="middle" font-size="12" font-weight="bold" fill="#000">Water</text>
 <circle cx="315" cy="324" r="8" fill="#4ECDC4" stroke="#0B7285" stroke-width="2"/>
 <text x="315" y="311" text-anchor="middle" font-size="12" font-weight="bold" fill="#000">Kettle</text>
 <circle cx="485" cy="412" r="8" fill="#45B7D1" stroke="#1971C2" stroke-width="2"/>
 <text x="485" y="399" text-anchor="middle" font-size="12" font-weight="bold" fill="#000">Electric Kettle</text>
-<circle cx="682.2" cy="412" r="8" fill="#96CEB4" stroke="#2F9E44" stroke-width="2"/>
-<text x="682.2" y="399" text-anchor="middle" font-size="12" font-weight="bold" fill="#000">Power</text>
+<circle cx="709.4" cy="412" r="8" fill="#96CEB4" stroke="#2F9E44" stroke-width="2"/>
+<text x="709.4" y="399" text-anchor="middle" font-size="12" font-weight="bold" fill="#000">Power</text>
 </svg>

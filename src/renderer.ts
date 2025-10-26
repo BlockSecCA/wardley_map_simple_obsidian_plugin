@@ -251,9 +251,13 @@ function spreadOverlappingComponents(components: Component[]): void {
 	// For each group with multiple components, spread them horizontally
 	for (const [key, group] of groups) {
 		if (group.length > 1) {
-			// Calculate spread within the evolution stage band (±0.08 from center)
 			const baseX = group[0].x!;
-			const spreadRange = 0.08; // 8% spread on each side
+
+			// Adaptive spread based on group size - more components = wider spread
+			// Base spread is 0.12 (12%), increased for larger groups
+			const baseSpread = 0.12;
+			const spreadMultiplier = Math.max(1, group.length / 3);
+			const spreadRange = baseSpread * spreadMultiplier;
 
 			group.forEach((comp, index) => {
 				const offset = (index - (group.length - 1) / 2) * (spreadRange / Math.max(group.length - 1, 1));
