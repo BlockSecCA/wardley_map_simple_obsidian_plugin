@@ -1,0 +1,42 @@
+/* Wardley Map Simple Plugin Styles */
+
+.wardley-map-container {
+	margin: 1em 0;
+	padding: 0;
+	text-align: center;
+}
+
+.wardley-map-container svg {
+	max-width: 100%;
+	height: auto;
+	border: 1px solid #e0e0e0;
+	border-radius: 4px;
+	background: white;
+}
+
+.wardley-map-error {
+	background-color: #fff5f5;
+	border: 1px solid #fc8181;
+	border-radius: 4px;
+	padding: 1em;
+	margin: 1em 0;
+	color: #742a2a;
+}
+
+.wardley-map-error h4 {
+	margin: 0 0 0.5em 0;
+	color: #c53030;
+	font-size: 1em;
+	font-weight: 600;
+}
+
+.wardley-map-error ul {
+	margin: 0;
+	padding-left: 1.5em;
+}
+
+.wardley-map-error li {
+	margin: 0.25em 0;
+	font-family: monospace;
+	font-size: 0.9em;
+}
