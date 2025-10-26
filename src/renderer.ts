@@ -20,6 +20,14 @@ const STAGE_LABELS: Record<EvolutionStage, string> = {
 	commodity: "Commodity",
 };
 
+// Color scheme for evolution stages
+const STAGE_COLORS: Record<EvolutionStage, { fill: string; stroke: string }> = {
+	genesis: { fill: "#FF6B6B", stroke: "#C92A2A" }, // Red - novel, uncertain
+	custom: { fill: "#4ECDC4", stroke: "#0B7285" }, // Teal - custom built
+	product: { fill: "#45B7D1", stroke: "#1971C2" }, // Blue - product
+	commodity: { fill: "#96CEB4", stroke: "#2F9E44" }, // Green - commodity
+};
+
 export interface RenderOptions {
 	width?: number;
 	height?: number;
@@ -50,6 +58,16 @@ export function renderWardleyMap(
 	svg.push(
 		`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" class="wardley-map">`
 	);
+
+	// Arrow marker definitions (must be at the beginning)
+	svg.push(`<defs>
+		<marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+			<polygon points="0 0, 10 3, 0 6" fill="#4A90E2" />
+		</marker>
+		<marker id="arrowhead-evolution" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+			<polygon points="0 0, 10 3, 0 6" fill="#9B59B6" />
+		</marker>
+	</defs>`);
 
 	// Background
 	svg.push(`<rect width="${width}" height="${height}" fill="white"/>`);
@@ -134,17 +152,21 @@ export function renderWardleyMap(
 
 	// Draw components
 	for (const comp of map.components) {
-		if (comp.x === undefined || comp.y === undefined) continue;
+		if (comp.x === undefined || comp.y === undefined) {
+			console.warn(`Skipping component ${comp.name} - x: ${comp.x}, y: ${comp.y}`);
+			continue;
+		}
 
 		const x = padding + comp.x * (width - 2 * padding);
 		const y = padding + comp.y * (height - 2 * padding - 40);
 
-		// Component circle
-		const fillColor = comp.isAnchor ? "#E74C3C" : "#2ECC71";
-		const strokeColor = comp.isAnchor ? "#C0392B" : "#27AE60";
+		// Component circle - color based on evolution stage
+		const colors = getStageColors(comp.stage);
+		const fillColor = colors.fill;
+		const strokeColor = colors.stroke;
 
 		svg.push(
-			`<circle cx="${x}" cy="${y}" r="${nodeRadius}" fill="${fillColor}" stroke="${strokeColor}" stroke-width="2"/>`
+			`<circle cx="${x}" cy="${y}" r="${nodeRadius}" fill="${fillColor}" stroke="${strokeColor}" stroke-width="2" class="${comp.isAnchor ? 'anchor' : 'component'}"/>`
 		);
 
 		// Component label
@@ -152,16 +174,6 @@ export function renderWardleyMap(
 			`<text x="${x}" y="${y - nodeRadius - 5}" text-anchor="middle" font-size="${fontSize}" font-weight="bold" fill="#000">${escapeHtml(comp.name)}</text>`
 		);
 	}
-
-	// Arrow marker definitions
-	svg.push(`<defs>
-		<marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
-			<polygon points="0 0, 10 3, 0 6" fill="#4A90E2" />
-		</marker>
-		<marker id="arrowhead-evolution" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
-			<polygon points="0 0, 10 3, 0 6" fill="#9B59B6" />
-		</marker>
-	</defs>`);
 
 	// Annotations (bottom)
 	if (map.annotations.length > 0) {
@@ -180,10 +192,17 @@ export function renderWardleyMap(
 }
 
 /**
+ * Get colors for a component based on its evolution stage
+ */
+function getStageColors(stage: EvolutionStage): { fill: string; stroke: string } {
+	return STAGE_COLORS[stage];
+}
+
+/**
  * Calculate X and Y positions for all components
  */
 function calculatePositions(map: WardleyMap): void {
-	// X-axis: Based on evolution stage
+	// X-axis: Based on evolution stage (initial positioning)
 	for (const comp of map.components) {
 		comp.x = STAGE_POSITIONS[comp.stage];
 	}
@@ -202,6 +221,44 @@ function calculatePositions(map: WardleyMap): void {
 		// Anchors should always be at the top
 		if (comp.isAnchor) {
 			comp.y = 0;
+		}
+	}
+
+	// Spread components horizontally if they overlap at the same stage/layer
+	spreadOverlappingComponents(map.components);
+
+	// Debug logging
+	for (const comp of map.components) {
+		console.log(`Component: ${comp.name}, x: ${comp.x}, y: ${comp.y}, stage: ${comp.stage}, isAnchor: ${comp.isAnchor}`);
+	}
+}
+
+/**
+ * Spread components horizontally within their evolution stage if they overlap
+ */
+function spreadOverlappingComponents(components: Component[]): void {
+	// Group components by their y position and stage
+	const groups = new Map<string, Component[]>();
+
+	for (const comp of components) {
+		const key = `${comp.y?.toFixed(3)}_${comp.stage}`;
+		if (!groups.has(key)) {
+			groups.set(key, []);
+		}
+		groups.get(key)!.push(comp);
+	}
+
+	// For each group with multiple components, spread them horizontally
+	for (const [key, group] of groups) {
+		if (group.length > 1) {
+			// Calculate spread within the evolution stage band (±0.08 from center)
+			const baseX = group[0].x!;
+			const spreadRange = 0.08; // 8% spread on each side
+
+			group.forEach((comp, index) => {
+				const offset = (index - (group.length - 1) / 2) * (spreadRange / Math.max(group.length - 1, 1));
+				comp.x = baseX + offset;
+			});
 		}
 	}
 }

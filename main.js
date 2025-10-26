@@ -232,6 +232,16 @@ var STAGE_LABELS = {
   product: "Product",
   commodity: "Commodity"
 };
+var STAGE_COLORS = {
+  genesis: { fill: "#FF6B6B", stroke: "#C92A2A" },
+  // Red - novel, uncertain
+  custom: { fill: "#4ECDC4", stroke: "#0B7285" },
+  // Teal - custom built
+  product: { fill: "#45B7D1", stroke: "#1971C2" },
+  // Blue - product
+  commodity: { fill: "#96CEB4", stroke: "#2F9E44" }
+  // Green - commodity
+};
 function renderWardleyMap(map, options = {}) {
   var _a, _b, _c, _d, _e;
   const width = (_a = options.width) != null ? _a : 800;
@@ -244,6 +254,14 @@ function renderWardleyMap(map, options = {}) {
   svg.push(
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" class="wardley-map">`
   );
+  svg.push(`<defs>
+		<marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+			<polygon points="0 0, 10 3, 0 6" fill="#4A90E2" />
+		</marker>
+		<marker id="arrowhead-evolution" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+			<polygon points="0 0, 10 3, 0 6" fill="#9B59B6" />
+		</marker>
+	</defs>`);
   svg.push(`<rect width="${width}" height="${height}" fill="white"/>`);
   const stageY = height - padding + 30;
   const stages = ["genesis", "custom", "product", "commodity"];
@@ -301,27 +319,22 @@ function renderWardleyMap(map, options = {}) {
     }
   }
   for (const comp of map.components) {
-    if (comp.x === void 0 || comp.y === void 0)
+    if (comp.x === void 0 || comp.y === void 0) {
+      console.warn(`Skipping component ${comp.name} - x: ${comp.x}, y: ${comp.y}`);
       continue;
+    }
     const x = padding + comp.x * (width - 2 * padding);
     const y = padding + comp.y * (height - 2 * padding - 40);
-    const fillColor = comp.isAnchor ? "#E74C3C" : "#2ECC71";
-    const strokeColor = comp.isAnchor ? "#C0392B" : "#27AE60";
+    const colors = getStageColors(comp.stage);
+    const fillColor = colors.fill;
+    const strokeColor = colors.stroke;
     svg.push(
-      `<circle cx="${x}" cy="${y}" r="${nodeRadius}" fill="${fillColor}" stroke="${strokeColor}" stroke-width="2"/>`
+      `<circle cx="${x}" cy="${y}" r="${nodeRadius}" fill="${fillColor}" stroke="${strokeColor}" stroke-width="2" class="${comp.isAnchor ? "anchor" : "component"}"/>`
     );
     svg.push(
       `<text x="${x}" y="${y - nodeRadius - 5}" text-anchor="middle" font-size="${fontSize}" font-weight="bold" fill="#000">${escapeHtml(comp.name)}</text>`
     );
   }
-  svg.push(`<defs>
-		<marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
-			<polygon points="0 0, 10 3, 0 6" fill="#4A90E2" />
-		</marker>
-		<marker id="arrowhead-evolution" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
-			<polygon points="0 0, 10 3, 0 6" fill="#9B59B6" />
-		</marker>
-	</defs>`);
   if (map.annotations.length > 0) {
     let annotY = height - 35;
     for (const ann of map.annotations) {
@@ -333,6 +346,9 @@ function renderWardleyMap(map, options = {}) {
   }
   svg.push("</svg>");
   return svg.join("\n");
+}
+function getStageColors(stage) {
+  return STAGE_COLORS[stage];
 }
 function calculatePositions(map) {
   var _a;
@@ -346,6 +362,31 @@ function calculatePositions(map) {
     comp.y = (maxLayer - layer) / (maxLayer + 1);
     if (comp.isAnchor) {
       comp.y = 0;
+    }
+  }
+  spreadOverlappingComponents(map.components);
+  for (const comp of map.components) {
+    console.log(`Component: ${comp.name}, x: ${comp.x}, y: ${comp.y}, stage: ${comp.stage}, isAnchor: ${comp.isAnchor}`);
+  }
+}
+function spreadOverlappingComponents(components) {
+  var _a;
+  const groups = /* @__PURE__ */ new Map();
+  for (const comp of components) {
+    const key = `${(_a = comp.y) == null ? void 0 : _a.toFixed(3)}_${comp.stage}`;
+    if (!groups.has(key)) {
+      groups.set(key, []);
+    }
+    groups.get(key).push(comp);
+  }
+  for (const [key, group] of groups) {
+    if (group.length > 1) {
+      const baseX = group[0].x;
+      const spreadRange = 0.08;
+      group.forEach((comp, index) => {
+        const offset = (index - (group.length - 1) / 2) * (spreadRange / Math.max(group.length - 1, 1));
+        comp.x = baseX + offset;
+      });
     }
   }
 }
