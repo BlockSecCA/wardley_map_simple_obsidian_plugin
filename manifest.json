@@ -1,0 +1,10 @@
+{
+	"id": "wardley-map-simple",
+	"name": "Wardley Map Simple",
+	"version": "0.1.0",
+	"minAppVersion": "1.0.0",
+	"description": "Render Wardley Maps from inline code blocks using declarative syntax",
+	"author": "BlockSecCA",
+	"authorUrl": "https://github.com/BlockSecCA/wardley_map_simple_obsidian_plugin",
+	"isDesktopOnly": false
+}
