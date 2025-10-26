@@ -27,7 +27,7 @@
 <line x1="655" y1="236" x2="673.1333333333333" y2="412" stroke="#4A90E2" stroke-width="2" marker-end="url(#arrowhead)"/>
 <line x1="655" y1="236" x2="315" y2="324" stroke="#4A90E2" stroke-width="2" marker-end="url(#arrowhead)"/>
 <line x1="315" y1="324" x2="709.4" y2="412" stroke="#4A90E2" stroke-width="2" marker-end="url(#arrowhead)"/>
-<line x1="315" y1="324" x2="485" y2="412" stroke="#9B59B6" stroke-width="2" stroke-dasharray="5,5" marker-end="url(#arrowhead-evolution)"/>
+<line x1="315" y1="324" x2="485" y2="324" stroke="#9B59B6" stroke-width="2" stroke-dasharray="5,5" marker-end="url(#arrowhead-evolution)"/>
 <circle cx="315" cy="60" r="8" fill="#4ECDC4" stroke="#0B7285" stroke-width="2"/>
 <text x="315" y="47" text-anchor="middle" font-size="12" font-weight="bold" fill="#000">Business</text>
 <circle cx="655" cy="60" r="8" fill="#96CEB4" stroke="#2F9E44" stroke-width="2"/>
@@ -44,8 +44,8 @@
 <text x="673.1333333333333" y="399" text-anchor="middle" font-size="12" font-weight="bold" fill="#000">Water</text>
 <circle cx="315" cy="324" r="8" fill="#4ECDC4" stroke="#0B7285" stroke-width="2"/>
 <text x="315" y="311" text-anchor="middle" font-size="12" font-weight="bold" fill="#000">Kettle</text>
-<circle cx="485" cy="412" r="8" fill="#45B7D1" stroke="#1971C2" stroke-width="2"/>
-<text x="485" y="399" text-anchor="middle" font-size="12" font-weight="bold" fill="#000">Electric Kettle</text>
+<circle cx="485" cy="324" r="8" fill="#45B7D1" stroke="#1971C2" stroke-width="2"/>
+<text x="485" y="311" text-anchor="middle" font-size="12" font-weight="bold" fill="#000">Electric Kettle</text>
 <circle cx="709.4" cy="412" r="8" fill="#96CEB4" stroke="#2F9E44" stroke-width="2"/>
 <text x="709.4" y="399" text-anchor="middle" font-size="12" font-weight="bold" fill="#000">Power</text>
 </svg>

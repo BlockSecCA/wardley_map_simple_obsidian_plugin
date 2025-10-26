@@ -364,6 +364,13 @@ function calculatePositions(map) {
       comp.y = 0;
     }
   }
+  for (const evo of map.evolutions) {
+    const sourceComp = map.components.find((c) => c.name === evo.from);
+    const targetComp = map.components.find((c) => c.name === evo.to);
+    if (sourceComp && targetComp && sourceComp.y !== void 0) {
+      targetComp.y = sourceComp.y;
+    }
+  }
   spreadOverlappingComponents(map.components);
   for (const comp of map.components) {
     console.log(`Component: ${comp.name}, x: ${comp.x}, y: ${comp.y}, stage: ${comp.stage}, isAnchor: ${comp.isAnchor}`);

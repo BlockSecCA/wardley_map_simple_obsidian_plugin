@@ -292,6 +292,18 @@ function calculatePositions(map) {
 		}
 	}
 
+	// Evolved components inherit Y position from their source
+	// Evolution represents maturity (X-axis), not value chain changes (Y-axis)
+	for (const evo of map.evolutions) {
+		const sourceComp = map.components.find(c => c.name === evo.from);
+		const targetComp = map.components.find(c => c.name === evo.to);
+
+		if (sourceComp && targetComp && sourceComp.y !== undefined) {
+			// Target inherits source's Y position
+			targetComp.y = sourceComp.y;
+		}
+	}
+
 	// Spread overlapping components
 	spreadOverlappingComponents(map.components);
 }
