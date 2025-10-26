@@ -2,7 +2,7 @@
 
 **Purpose:** Quick context reconstruction for AI agents working on this project. This file helps resume work efficiently without re-analyzing the entire codebase.
 
-**Last Updated:** After implementing label overlap fixes and completing documentation
+**Last Updated:** Version 1.0.0 release preparation complete (October 2025)
 
 ---
 
@@ -34,22 +34,25 @@
 **Last Test Results:**
 ```
 Tea Shop Example (10 components, 8 dependencies, 1 evolution):
-- Automated validation: 100% (20/20 checks passed)
+- Automated validation: 100% (21/21 checks passed)
 - Label overlaps: None detected
 - All components visible and correctly positioned
+- Evolution alignment: Verified (Kettle and Electric Kettle at Y=324.0)
 ```
 
-**Branch:** `claude/obsidian-research-011CUW9AhekDK1T3oAUk2t8e`
+**Current Version:** 1.0.0
+
+**Branch:** `main` (feature branches merged and deleted)
 
 **Built Artifacts:**
-- `main.js` - 15KB, committed to repo
+- `main.js` - 17KB, committed to repo
 - `Tea-Shop.svg` - Generated test output, committed
 
 ---
 
 ## Critical Context for Resumption
 
-### The Three Rendering Bugs We Fixed
+### The Four Critical Rendering Bugs We Fixed
 
 **PROBLEM 1: Component Overlap (FIXED)**
 - **Issue:** Components with same evolution stage + same Y-layer rendered at identical coordinates
@@ -68,6 +71,14 @@ Tea Shop Example (10 components, 8 dependencies, 1 evolution):
 - **Example:** 4 commodity components at bottom had overlapping labels by up to 17px
 - **Fix:** Increased spread from 8% to 12%, made it adaptive
 - **Location:** `src/renderer.ts:258` - `baseSpread = 0.12`
+
+**PROBLEM 4: Evolved Component Y-Axis Misalignment (FIXED - PR #1)**
+- **Issue:** Evolved components positioned independently by topological sort, not aligned with source
+- **Example:** Kettle at Y=324, Electric Kettle at Y=412 (should both be Y=324)
+- **Root Cause:** Electric Kettle had no dependencies, so topological sort placed it at bottom layer
+- **Fix:** After topological sort, evolved components inherit Y-position from source component
+- **Location:** `src/renderer.ts:227-237` and `generate-svg.js:295-305`
+- **Rationale:** Evolution = X-axis (maturity), NOT Y-axis (value chain)
 
 **Do NOT revert these fixes!** They're tested and working.
 
@@ -205,7 +216,7 @@ node generate-svg.js Tea-Shop.md
 
 # 3. Automated validation
 node validate-svg.js Tea-Shop.md Tea-Shop.svg
-# MUST show: Score: 100.0% (20/20)
+# MUST show: Score: 100.0% (21/21)
 
 # 4. Label overlap check
 node check-labels.js
@@ -297,7 +308,7 @@ These are centered in their respective quarters. Changing them will confuse user
 
 When resuming work on this project:
 
-- [ ] Check current branch: `claude/obsidian-research-011CUW9AhekDK1T3oAUk2t8e`
+- [ ] Check current branch: Should be `main` (v1.0.0 released)
 - [ ] Read this file (CLAUDE.md) completely
 - [ ] Run tests to confirm current state:
   ```bash
@@ -305,7 +316,8 @@ When resuming work on this project:
   node generate-svg.js Tea-Shop.md
   node validate-svg.js Tea-Shop.md Tea-Shop.svg
   ```
-- [ ] Verify test results: 100% validation, no label overlaps
+- [ ] Verify test results: 100% validation (21/21), no label overlaps
+- [ ] Check if v1.0.0 release has been created on GitHub
 - [ ] Review any user feedback/issues since last session
 - [ ] Check what task user is requesting
 
@@ -426,12 +438,13 @@ Before making changes:
 
 **How to know if a change is good:**
 
-1. **Automated validation:** Still 100% (20/20)
+1. **Automated validation:** Still 100% (21/21)
 2. **No label overlaps:** `check-labels.js` shows gaps > 0px
 3. **All components visible:** Count in `analyze-svg.js` matches declared count
-4. **Visually reasonable:** Open SVG - does it look good?
-5. **No new errors:** Parser doesn't throw unexpected errors
-6. **Backward compatible:** Old examples still render correctly
+4. **Evolution alignment:** Evolved components at same Y as source
+5. **Visually reasonable:** Open SVG - does it look good?
+6. **No new errors:** Parser doesn't throw unexpected errors
+7. **Backward compatible:** Old examples still render correctly
 
 **If any metric regresses, investigate why before committing.**
 
@@ -439,15 +452,29 @@ Before making changes:
 
 ## Last Known Good State
 
-**Commit:** Most recent on `claude/obsidian-research-011CUW9AhekDK1T3oAUk2t8e`
+**Version:** 1.0.0 (Released)
+
+**Branch:** `main`
+
+**Commit:** ac0a572 (Merge pull request #3)
 
 **Test Results:**
 ```
 ✅ Tea Shop: 10/10 components, 8/8 dependencies, 1/1 evolution
-✅ Validation: 100% (20/20 automated checks)
+✅ Validation: 100% (21/21 automated checks)
 ✅ Label overlaps: None
+✅ Evolution alignment: Kettle and Electric Kettle both at Y=324.0
 ✅ Visual inspection: All readable, good spacing
 ```
+
+**Release Status:**
+- Version bumped to 1.0.0 in manifest.json and package.json
+- Feature branches merged and deleted
+- Ready for GitHub Release creation with artifacts:
+  - main.js (17KB)
+  - manifest.json
+  - styles.css
+  - wardley-map-simple-1.0.0.zip (convenience bundle)
 
 **If things break:** You can `git log` and `git diff` to see what changed since this state.
 
