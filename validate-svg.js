@@ -327,6 +327,67 @@ class WardleyMapValidator {
 				this.warn('Some evolution arrows not dashed');
 			}
 		}
+
+		// Check evolution horizontal alignment (Y-position matching)
+		// Evolution represents maturity (X-axis), not value chain changes (Y-axis)
+		this.validateEvolutionAlignment();
+	}
+
+	validateEvolutionAlignment() {
+		const circles = this.querySelectorAll('circle');
+		const texts = this.querySelectorAll('text');
+
+		// Helper to find circle by component name
+		const findComponentCircle = (componentName) => {
+			// Find the label text element
+			const label = texts.find(t => t.textContent === componentName);
+			if (!label) return null;
+
+			// Get label position
+			const labelX = parseFloat(label.getAttribute('x'));
+			const labelY = parseFloat(label.getAttribute('y'));
+
+			// Find nearest circle (should be close to label)
+			let nearest = null;
+			let minDist = Infinity;
+
+			circles.forEach(circle => {
+				const cx = parseFloat(circle.getAttribute('cx'));
+				const cy = parseFloat(circle.getAttribute('cy'));
+				const dist = Math.sqrt(
+					Math.pow(cx - labelX, 2) + Math.pow(cy - labelY, 2)
+				);
+
+				if (dist < minDist) {
+					minDist = dist;
+					nearest = circle;
+				}
+			});
+
+			return minDist < 100 ? nearest : null; // Within 100px
+		};
+
+		// Check each evolution
+		let allAligned = true;
+		this.ast.evolutions.forEach(evo => {
+			const sourceCircle = findComponentCircle(evo.from);
+			const targetCircle = findComponentCircle(evo.to);
+
+			if (sourceCircle && targetCircle) {
+				const sourceY = parseFloat(sourceCircle.getAttribute('cy'));
+				const targetY = parseFloat(targetCircle.getAttribute('cy'));
+				const yDiff = Math.abs(sourceY - targetY);
+
+				if (yDiff < 1) {
+					this.pass(`Evolution "${evo.from}" → "${evo.to}": Y-positions aligned (${sourceY.toFixed(1)})`);
+				} else {
+					this.fail(`Evolution "${evo.from}" → "${evo.to}": Y-position mismatch (${sourceY.toFixed(1)} vs ${targetY.toFixed(1)})`);
+					allAligned = false;
+				}
+			} else {
+				this.warn(`Evolution "${evo.from}" → "${evo.to}": Could not locate components for alignment check`);
+			}
+		});
 	}
 
 	validateAxes() {

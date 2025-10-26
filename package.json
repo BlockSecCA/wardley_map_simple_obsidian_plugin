@@ -1,6 +1,6 @@
 {
 	"name": "wardley-map-simple",
-	"version": "0.1.0",
+	"version": "1.0.0",
 	"description": "Render Wardley Maps from inline code blocks using declarative syntax",
 	"main": "main.js",
 	"scripts": {

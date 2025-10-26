@@ -408,6 +408,45 @@ assert(electricX > kettleX, 'Evolution should move rightward');
 assert(Math.abs(arrowX2 - electricX) < 30, 'Arrow should point to Electric Kettle');
 ```
 
+### 5.4 Evolution Horizontal Alignment
+- ✅ Evolved components MUST maintain the same Y-position as their source component
+- ✅ Evolution represents maturity progression (X-axis), NOT value chain changes (Y-axis)
+- ✅ Both source and target components must be horizontally aligned
+
+**Rationale:**
+An evolved component represents the same capability at a different maturity level. Since the Y-axis represents the value chain position (what depends on what), and evolution doesn't change the dependency structure, evolved components must remain at the same height as their source.
+
+**Example:**
+```wardley
+component Kettle [custom]
+component Electric Kettle [product]
+Kettle -> Power
+evolve Kettle -> Electric Kettle [product]
+```
+
+In this example:
+- Kettle is at some Y position based on its value chain dependencies
+- Electric Kettle represents Kettle evolved to product stage
+- Electric Kettle MUST have the same Y-position as Kettle
+- Only the X-position changes (custom → product evolution)
+
+**Validation:**
+```javascript
+// For "evolve Kettle -> Electric Kettle [product]"
+const kettleNode = svg.querySelector('#component-kettle');
+const electricNode = svg.querySelector('#component-electric-kettle');
+
+const kettleY = parseFloat(kettleNode.getAttribute('cy'));
+const electricY = parseFloat(electricNode.getAttribute('cy'));
+
+// Y positions must match (allow 1px tolerance for floating point precision)
+assert(Math.abs(kettleY - electricY) < 1,
+  `Evolution Y-position mismatch: Kettle at ${kettleY}, Electric Kettle at ${electricY}`);
+```
+
+**Common Failure Mode:**
+If Electric Kettle has no explicit dependencies declared, a naive topological sort might position it independently at the bottom (layer 0), causing misalignment. The correct implementation must inherit the Y-position from the source component after topological sorting.
+
 ---
 
 ## 6. Map Axes and Grid
@@ -563,6 +602,7 @@ Use this checklist to validate a generated SVG:
 - [ ] Evolution arrows visually distinct (dashed, different color)
 - [ ] Evolution arrows point from less to more evolved
 - [ ] Evolution arrows connect correct components
+- [ ] Evolved components maintain same Y-position as source (horizontal alignment)
 
 ### Axes and Grid
 - [ ] X-axis (evolution) present with stage labels
