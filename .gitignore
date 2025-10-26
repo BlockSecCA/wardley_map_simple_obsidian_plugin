@@ -1,6 +1,4 @@
-# Build output
-main.js
-main.js.map
+# Build output (keep source maps out, but commit main.js for Obsidian)
 *.js.map
 
 # Dependencies
