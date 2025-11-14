@@ -309,3 +309,8 @@ Found a bug? Have a suggestion?
 ---
 
 **Ready to map your strategy?** Create a new note, add a `wardley` code block, and start visualizing your landscape! 🗺️
+
+## Author
+
+Carlos - BlockSecCA
+
