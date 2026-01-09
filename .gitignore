@@ -26,3 +26,6 @@ yarn-error.log*
 
 # Obsidian vault metadata (local only)
 .obsidian/
+
+# Obsidian trash
+.trash/
