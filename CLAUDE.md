@@ -1,4 +1,6 @@
-# Claude Agent Context
+# wardley-map-simple
+
+> PUBLIC REPO — No secrets, no PII, no internal references. Assume strangers read everything.
 
 **Purpose:** Quick context reconstruction for AI agents working on this project. This file helps resume work efficiently without re-analyzing the entire codebase.
 
