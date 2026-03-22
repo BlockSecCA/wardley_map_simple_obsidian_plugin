@@ -3,10 +3,18 @@ import type {
 	Component,
 	Dependency,
 	Evolution,
+	EvolveTo,
+	Flow,
+	Pipeline,
 	Annotation,
 	EvolutionStage,
+	SourceStrategy,
+	FlowDirection,
 	ParseError,
 } from "./types";
+
+const VALID_STAGES = ["genesis", "custom", "product", "commodity"];
+const VALID_STRATEGIES = ["build", "buy", "outsource", "market"];
 
 /**
  * Parse a Wardley Map from the inline syntax
@@ -21,18 +29,65 @@ export function parseWardleyMap(source: string): {
 		components: [],
 		dependencies: [],
 		evolutions: [],
+		evolveTos: [],
+		flows: [],
+		pipelines: [],
 		annotations: [],
 		notes: [],
 	};
 
 	const componentMap = new Map<string, Component>();
+	let currentPipeline: Pipeline | null = null;
 
 	for (let i = 0; i < lines.length; i++) {
-		const line = lines[i].trim();
+		const rawLine = lines[i];
+		const line = rawLine.trim();
 		const lineNum = i + 1;
+		const isIndented = rawLine.length > 0 && (rawLine.startsWith("\t") || rawLine.startsWith("  "));
 
-		// Skip empty lines and comments
-		if (!line || line.startsWith("#")) continue;
+		// Empty lines and comments end any active pipeline block
+		if (!line || line.startsWith("#")) {
+			if (currentPipeline) currentPipeline = null;
+			continue;
+		}
+
+		// If we're inside a pipeline block, try to parse indented components
+		if (currentPipeline) {
+			if (isIndented) {
+				const pipeCompMatch = line.match(
+					/^component\s+(.+?)\s+\[(\w+)\]$/
+				);
+				if (pipeCompMatch) {
+					const name = pipeCompMatch[1].trim();
+					const stage = pipeCompMatch[2] as EvolutionStage;
+
+					if (!isValidStage(stage)) {
+						errors.push({
+							line: lineNum,
+							message: `Invalid evolution stage '${stage}' in pipeline component`,
+						});
+						continue;
+					}
+
+					if (componentMap.has(name)) {
+						errors.push({
+							line: lineNum,
+							message: `Component '${name}' declared multiple times`,
+						});
+						continue;
+					}
+
+					const component: Component = { name, stage, isAnchor: false };
+					componentMap.set(name, component);
+					map.components.push(component);
+					currentPipeline.subComponents.push(name);
+					continue;
+				}
+			}
+			// Any non-matching line (indented or not) ends the pipeline block
+			// and falls through to normal parsing below
+			currentPipeline = null;
+		}
 
 		try {
 			// Title
@@ -41,18 +96,29 @@ export function parseWardleyMap(source: string): {
 				continue;
 			}
 
-			// Component
+			// Component (with optional strategy)
+			// component Name [stage]
+			// component Name [stage] (build)
 			const componentMatch = line.match(
-				/^component\s+(.+?)\s+\[(\w+)\]$/
+				/^component\s+(.+?)\s+\[(\w+)\](?:\s+\((\w+)\))?$/
 			);
 			if (componentMatch) {
 				const name = componentMatch[1].trim();
 				const stage = componentMatch[2] as EvolutionStage;
+				const strategy = componentMatch[3] as SourceStrategy | undefined;
 
 				if (!isValidStage(stage)) {
 					errors.push({
 						line: lineNum,
 						message: `Invalid evolution stage '${stage}'. Must be: genesis, custom, product, commodity`,
+					});
+					continue;
+				}
+
+				if (strategy && !isValidStrategy(strategy)) {
+					errors.push({
+						line: lineNum,
+						message: `Invalid strategy '${strategy}'. Must be: build, buy, outsource, market`,
 					});
 					continue;
 				}
@@ -65,22 +131,33 @@ export function parseWardleyMap(source: string): {
 					continue;
 				}
 
-				const component: Component = { name, stage, isAnchor: false };
+				const component: Component = { name, stage, isAnchor: false, strategy };
 				componentMap.set(name, component);
 				map.components.push(component);
 				continue;
 			}
 
-			// Anchor
-			const anchorMatch = line.match(/^anchor\s+(.+?)\s+\[(\w+)\]$/);
+			// Anchor (with optional strategy)
+			const anchorMatch = line.match(
+				/^anchor\s+(.+?)\s+\[(\w+)\](?:\s+\((\w+)\))?$/
+			);
 			if (anchorMatch) {
 				const name = anchorMatch[1].trim();
 				const stage = anchorMatch[2] as EvolutionStage;
+				const strategy = anchorMatch[3] as SourceStrategy | undefined;
 
 				if (!isValidStage(stage)) {
 					errors.push({
 						line: lineNum,
 						message: `Invalid evolution stage '${stage}'. Must be: genesis, custom, product, commodity`,
+					});
+					continue;
+				}
+
+				if (strategy && !isValidStrategy(strategy)) {
+					errors.push({
+						line: lineNum,
+						message: `Invalid strategy '${strategy}'. Must be: build, buy, outsource, market`,
 					});
 					continue;
 				}
@@ -93,9 +170,25 @@ export function parseWardleyMap(source: string): {
 					continue;
 				}
 
-				const component: Component = { name, stage, isAnchor: true };
+				const component: Component = { name, stage, isAnchor: true, strategy };
 				componentMap.set(name, component);
 				map.components.push(component);
+				continue;
+			}
+
+			// Inertia
+			const inertiaMatch = line.match(/^inertia\s+(.+)$/);
+			if (inertiaMatch) {
+				const name = inertiaMatch[1].trim();
+				const comp = componentMap.get(name);
+				if (!comp) {
+					errors.push({
+						line: lineNum,
+						message: `Component '${name}' not declared`,
+					});
+					continue;
+				}
+				comp.hasInertia = true;
 				continue;
 			}
 
@@ -128,7 +221,7 @@ export function parseWardleyMap(source: string): {
 				continue;
 			}
 
-			// Evolution (stage evolution)
+			// Evolve to stage (no target component)
 			const evolveStageMatch = line.match(
 				/^evolve\s+(.+?)\s+\[(\w+)\]$/
 			);
@@ -144,8 +237,39 @@ export function parseWardleyMap(source: string): {
 					continue;
 				}
 
-				// For stage evolution, we can show it differently
-				// For now, we'll just skip or handle it later
+				if (!isValidStage(stage)) {
+					errors.push({
+						line: lineNum,
+						message: `Invalid evolution stage '${stage}'`,
+					});
+					continue;
+				}
+
+				map.evolveTos.push({ component: name, targetStage: stage });
+				continue;
+			}
+
+			// Flow arrows: A +> B, A +< B, A +<> B (with optional label via ;)
+			const flowMatch = line.match(
+				/^(.+?)\s+\+(<?)(>?)\s+(.+?)(?:;\s*(.+))?$/
+			);
+			if (flowMatch && (flowMatch[2] || flowMatch[3])) {
+				const from = flowMatch[1].trim();
+				const hasLeft = flowMatch[2] === "<";
+				const hasRight = flowMatch[3] === ">";
+				const to = flowMatch[4].trim();
+				const label = flowMatch[5]?.trim();
+
+				let direction: FlowDirection;
+				if (hasLeft && hasRight) {
+					direction = "bidirectional";
+				} else if (hasLeft) {
+					direction = "backward";
+				} else {
+					direction = "forward";
+				}
+
+				map.flows.push({ from, to, direction, label });
 				continue;
 			}
 
@@ -173,6 +297,22 @@ export function parseWardleyMap(source: string): {
 			// Note
 			if (line.startsWith("note ")) {
 				map.notes.push(line.substring(5).trim());
+				continue;
+			}
+
+			// Pipeline block start
+			const pipelineMatch = line.match(/^pipeline\s+(.+)$/);
+			if (pipelineMatch) {
+				const parentName = pipelineMatch[1].trim();
+				if (!componentMap.has(parentName)) {
+					errors.push({
+						line: lineNum,
+						message: `Pipeline parent '${parentName}' not declared as a component`,
+					});
+					continue;
+				}
+				currentPipeline = { parent: parentName, subComponents: [] };
+				map.pipelines.push(currentPipeline);
 				continue;
 			}
 
@@ -207,6 +347,22 @@ export function parseWardleyMap(source: string): {
 		}
 	}
 
+	// Validate flows
+	for (const flow of map.flows) {
+		if (!componentMap.has(flow.from)) {
+			errors.push({
+				line: 0,
+				message: `Flow references undeclared component '${flow.from}'`,
+			});
+		}
+		if (!componentMap.has(flow.to)) {
+			errors.push({
+				line: 0,
+				message: `Flow references undeclared component '${flow.to}'`,
+			});
+		}
+	}
+
 	return {
 		map: errors.length === 0 ? map : null,
 		errors,
@@ -223,7 +379,6 @@ function parseDependencyChain(
 	dependencies: Dependency[],
 	errors: ParseError[]
 ): void {
-	// Split by -> but handle semicolon annotations
 	const parts = line.split("->");
 
 	for (let i = 0; i < parts.length - 1; i++) {
@@ -250,9 +405,10 @@ function parseDependencyChain(
 	}
 }
 
-/**
- * Check if a stage is valid
- */
 function isValidStage(stage: string): stage is EvolutionStage {
-	return ["genesis", "custom", "product", "commodity"].includes(stage);
+	return VALID_STAGES.includes(stage);
+}
+
+function isValidStrategy(strategy: string): strategy is SourceStrategy {
+	return VALID_STRATEGIES.includes(strategy);
 }

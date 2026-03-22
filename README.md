@@ -1,135 +1,115 @@
 # Wardley Map Simple - Obsidian Plugin
 
-Create strategic Wardley Maps directly in your Obsidian notes using simple, declarative syntax. No manual positioning, no coordinates - just describe your components and dependencies, and let the plugin handle the layout.
+Create Wardley Maps in Obsidian using declarative syntax. No coordinates, no manual positioning: describe your components and dependencies, and the plugin handles the layout.
 
-## What is Wardley Mapping?
-
-[Wardley Mapping](https://wardleymaps.com/) is a strategic planning technique that helps you visualize the evolution of components in your business, technology, or knowledge domain. Maps show:
-- **Value chain** (what depends on what)
-- **Evolution stages** (genesis → custom → product → commodity)
-- **Strategic positioning** and opportunities
-
-This plugin makes it easy to create Wardley Maps in Obsidian using code blocks, similar to Mermaid diagrams.
-
----
-
-## Quick Start
-
-Create a code block with `wardley` and start mapping:
-
-````markdown
-```wardley
-title My First Map
-
-anchor User Need [genesis]
-component Our Solution [custom]
-component Cloud Platform [commodity]
-
-User Need -> Our Solution -> Cloud Platform
-```
-````
-
-**That's it!** The plugin will automatically position components based on their evolution stage and value chain relationships.
-
----
+![Tea Shop Example](examples/Tea-Shop.svg)
 
 ## Installation
 
-### Option 1: Manual Installation (Current)
+1. Download the latest release ZIP from GitHub
+2. Extract `main.js`, `manifest.json`, and `styles.css` into your vault at `.obsidian/plugins/wardley-map-simple/`
+3. In Obsidian: Settings > Community Plugins > Reload > Enable "Wardley Map Simple"
 
-1. Download the latest release from GitHub
-2. Extract the ZIP file
-3. Copy the `wardley-map-simple` folder to your vault's `.obsidian/plugins/` directory
-4. In Obsidian, go to Settings → Community Plugins
-5. Click "Reload plugins" (if needed)
-6. Enable "Wardley Map Simple"
+## Quick Start
 
-### Option 2: Community Plugins (Coming Soon)
-
-Search for "Wardley Map Simple" in Obsidian's Community Plugins browser.
-
----
-
-## Basic Usage
-
-### 1. Create Components
-
-Components are the building blocks of your map:
-
-```wardley
-component Cup of Tea [product]
-component Hot Water [commodity]
-component Kettle [custom]
-component Power [commodity]
-```
-
-**Evolution stages** (left to right on the map):
-- `genesis` - Novel, uncertain, rapidly changing (Red)
-- `custom` - Competitive advantage, custom-built (Teal)
-- `product` - Best practices, standardized (Blue)
-- `commodity` - Utility-like, stable, well-defined (Green)
-
-### 2. Add User Needs (Anchors)
-
-Anchors represent user needs and appear at the top of the value chain:
-
-```wardley
-anchor Business [custom]
-anchor Public [commodity]
-```
-
-### 3. Define Dependencies
-
-Show what depends on what using arrows:
-
-```wardley
-Business -> Cup of Tea
-Cup of Tea -> Hot Water
-Hot Water -> Kettle
-Kettle -> Power
-```
-
-**Chain notation** for linear dependencies:
-```wardley
-Business -> Cup of Tea -> Hot Water -> Kettle -> Power
-```
-
-**Optional labels** to add context:
-```wardley
-Hot Water -> Kettle; limited by
-```
-
-### 4. Show Evolution
-
-Illustrate how components evolve over time:
-
-```wardley
-component Manual Kettle [custom]
-component Electric Kettle [product]
-
-evolve Manual Kettle -> Electric Kettle [product]
-```
-
-Evolution arrows appear as dashed purple lines.
-
-### 5. Add Strategic Insights
-
-```wardley
-annotation 1 Standardising power enables faster kettle evolution
-annotation 2 Hot water is well understood and commoditized
-```
-
-Annotations appear at the bottom of your map.
-
----
-
-## Complete Example: Tea Shop
-
-See this classic Wardley Mapping example in action - check out [`Tea-Shop.md`](./Tea-Shop.md) in this repository!
+Create a fenced code block with language `wardley`:
 
 ````markdown
 ```wardley
-title Tea Shop Strategy
+title My Map
+
+anchor User Need [custom]
+component Our App [product]
+component Cloud Platform [commodity]
+
+User Need -> Our App -> Cloud Platform
+```
+````
+
+The plugin renders the map automatically. Components are positioned by evolution stage (X-axis) and dependency depth (Y-axis).
+
+## Syntax Reference
+
+### Components and Anchors
+
+```
+component Name [stage]              # regular component
+component Name [stage] (strategy)   # with source strategy
+anchor User Need [stage]            # user need (always at top)
+```
+
+**Evolution stages** (X-axis, left to right):
+- `genesis` -- novel, uncertain (red)
+- `custom` -- custom-built (teal)
+- `product` -- standardized (blue)
+- `commodity` -- utility (green)
+
+**Source strategies** (optional): `build`, `buy`, `outsource`, `market`
+
+### Dependencies
+
+```
+A -> B                  # A depends on B
+A -> B -> C -> D        # chain notation
+A -> B; some label      # with annotation
+```
+
+### Evolution
+
+```
+evolve Old -> New [product]     # component-to-component (dashed purple arrow)
+evolve Component [product]      # evolve to stage (rightward arrow at same Y)
+```
+
+### Inertia
+
+```
+inertia ComponentName           # vertical bar indicating resistance to change
+```
+
+### Flow Arrows
+
+Flow arrows are distinct from dependencies (rendered in orange):
+
+```
+A +> B                  # forward flow
+A +< B                  # backward flow
+A +<> B                 # bidirectional flow
+A +> B; label           # with annotation
+```
+
+### Pipelines
+
+A component containing sub-components at different evolution stages, rendered as a horizontal box:
+
+```
+component Database [product]
+
+pipeline Database
+  component File Storage [genesis]
+  component SQL DB [custom]
+  component NoSQL [product]
+  component Cloud DB [commodity]
+```
+
+Sub-components must be indented (2 spaces or tab). The pipeline block ends at the next non-indented or empty line.
+
+### Metadata
+
+```
+title Map Title                 # optional title
+annotation 1 Some insight       # numbered annotation (bottom of map)
+note General observation        # note text
+# this is a comment             # comments are ignored
+```
+
+## Examples
+
+### Tea Shop (Classic Wardley Map)
+
+````markdown
+```wardley
+title Tea Shop
 
 anchor Business [custom]
 anchor Public [commodity]
@@ -149,168 +129,95 @@ Cup of Tea -> Cup
 Cup of Tea -> Tea
 Cup of Tea -> Hot Water
 Hot Water -> Water
-Hot Water -> Kettle; limited by
+Hot Water -> Kettle
 Kettle -> Power
 
 evolve Kettle -> Electric Kettle [product]
-
-annotation 1 Standardising power allows Kettles to evolve faster
-annotation 2 Hot water is obvious and well known
 ```
 ````
 
-This creates a map showing:
-- ✅ User needs (Business, Public) at the top
-- ✅ Value chain flowing downward to infrastructure (Power)
-- ✅ Components positioned by evolution stage (left = genesis, right = commodity)
-- ✅ Color-coded by maturity (red → teal → blue → green)
-- ✅ Evolution pathway from Kettle to Electric Kettle
+This produces the map shown at the top of this README, with:
+- User needs (Business, Public) at the top
+- Value chain flowing downward to infrastructure (Power)
+- Components color-coded by evolution stage
+- Evolution arrow from Kettle to Electric Kettle
 
----
+### Database Pipeline
 
-## Understanding Your Maps
-
-### Map Layout
-
-**Horizontal (X-axis) - Evolution:**
-- Left side: Genesis (novel, uncertain) - **Red**
-- Left-center: Custom (competitive advantage) - **Teal**
-- Right-center: Product (standardized) - **Blue**
-- Right side: Commodity (utility, stable) - **Green**
-
-**Vertical (Y-axis) - Value Chain:**
-- Top: User needs and visible components
-- Middle: Supporting components
-- Bottom: Infrastructure and foundations
-
-**The plugin automatically positions components** using:
-- Evolution stage for horizontal placement
-- Topological sorting of dependencies for vertical placement
-- Smart spreading to prevent overlaps
-
-### Visual Elements
-
-- **Circles**: Regular components
-- **Blue solid arrows**: Dependencies (what needs what)
-- **Purple dashed arrows**: Evolution (how things progress)
-- **Grid lines**: Evolution stage boundaries
-- **Color coding**: Component maturity by evolution stage
-
----
-
-## Syntax Quick Reference
-
-### Components & Anchors
+````markdown
 ```wardley
-component Name [stage]          # Regular component
-anchor User Need [stage]        # User need (top of chain)
+title Database Evolution
+
+anchor Business [custom]
+component Service [product]
+component Database [product]
+
+pipeline Database
+  component File Storage [genesis]
+  component SQL DB [custom]
+  component NoSQL [product]
+  component Cloud DB [commodity]
+
+Business -> Service
+Service -> Database
+```
+````
+
+More examples in the [`examples/`](./examples/) folder.
+
+## How the Layout Works
+
+- **X-axis (Evolution)**: Components are placed in their stage band (genesis, custom, product, commodity)
+- **Y-axis (Value Chain)**: Computed from dependency depth. Anchors at the top, deepest dependencies at the bottom. No manual coordinates needed.
+- **Overlap prevention**: Components at the same depth and stage are spread horizontally, ordered by their connections to reduce edge crossings
+
+## Theming
+
+The plugin uses CSS custom properties. Override them in an Obsidian CSS snippet:
+
+```css
+.wardley-map-container {
+  --wardley-genesis-fill: #FF6B6B;
+  --wardley-custom-fill: #4ECDC4;
+  --wardley-product-fill: #45B7D1;
+  --wardley-commodity-fill: #96CEB4;
+  --wardley-bg: white;
+}
 ```
 
-### Dependencies
-```wardley
-ComponentA -> ComponentB        # A depends on B
-A -> B -> C -> D               # Chain notation
-Kettle -> Power; limited by    # With annotation
+All SVG elements have semantic CSS classes (`wardley-node`, `wardley-edge`, `wardley-pipeline`, etc.) for fine-grained styling.
+
+## Development
+
+```bash
+npm install
+npm run build       # type-check + bundle
+npm test            # 65 tests (parser, layout, renderer, backward compat)
+npm run dev         # watch mode
 ```
 
-### Evolution
-```wardley
-evolve OldTech -> NewTech [product]    # Shows progression
-```
+**Project structure:**
+- `src/` -- TypeScript source (parser, renderer, types, plugin entry)
+- `examples/` -- sample Wardley Map definitions
+- `tools/` -- standalone SVG generator and validators
+- `test.mts` -- test suite (Node built-in test runner)
 
-### Metadata
-```wardley
-title Your Map Title           # Optional title
-annotation 1 Your insight      # Numbered insights
-note General observation       # Map notes
-```
+## Syntax and OWM
 
-### Evolution Stages
-- `genesis` - Uncharted territory
-- `custom` - Bespoke solutions
-- `product` - Off-the-shelf products
-- `commodity` - Standardized utilities
+This plugin's syntax is inspired by [OnlineWardleyMaps (OWM)](https://onlinewardleymaps.com/) and supports the same Wardley elements (components, anchors, pipelines, inertia, flows, evolution). However, it deliberately uses **named evolution stages** (`genesis`, `custom`, `product`, `commodity`) instead of OWM's numeric coordinates (`[visibility, evolution]`). The layout is computed automatically from the dependency graph, so you never need to specify positions.
 
----
+For the OWM DSL reference, see the [OWM documentation](https://docs.onlinewardleymaps.com/docs/dsl-reference/).
 
-## Troubleshooting
+No code is shared with OWM or [Mermaid's Wardley Maps implementation](https://github.com/mermaid-js/mermaid/pull/7147). The parser and renderer are built from scratch for Obsidian.
 
-### Map doesn't appear
-- ✅ Check that you used triple backticks: ` ```wardley `
-- ✅ Verify the plugin is enabled in Settings → Community Plugins
-- ✅ Try reloading Obsidian
+## Credits
 
-### Components are missing
-- ✅ Make sure components are declared before they're referenced
-- ✅ Check for typos in component names (they're case-sensitive)
-- ✅ Verify evolution stage is valid (genesis, custom, product, commodity)
+Wardley Mapping methodology by [Simon Wardley](https://wardleymaps.com/). Learn more: [Wardley Maps book](https://medium.com/wardleymaps) (free online).
 
-### "Parse error" message appears
-- ✅ Check the error message - it includes the line number
-- ✅ Verify syntax: `component Name [stage]`
-- ✅ Make sure square brackets are present and stage name is correct
-- ✅ Check that dependencies reference declared components
+## License
 
-### Components overlap
-- ✅ This is expected when multiple components share the same evolution stage and value chain layer
-- ✅ The plugin spreads them horizontally to minimize overlap
-- ✅ Consider using different evolution stages if components are truly at different maturity levels
-
-### Colors look wrong
-- ✅ Colors are based on evolution stage, not component type
-- ✅ Genesis = Red, Custom = Teal, Product = Blue, Commodity = Green
-- ✅ Anchors use the same color scheme as regular components
-
----
-
-## More Examples
-
-Check out these files in the repository:
-- **[`Tea-Shop.md`](./Tea-Shop.md)** - Classic Tea Shop example with full annotations
-- **[`test-examples.md`](./test-examples.md)** - Multiple examples from minimal to complex
-
----
-
-## Tips for Better Maps
-
-1. **Start simple** - Begin with just a few components and add more as needed
-2. **Use anchors** - Always identify your user needs at the top
-3. **Check dependencies** - Make sure arrows flow in the right direction (toward what's needed)
-4. **Leverage evolution** - Position components based on their actual maturity, not desired state
-5. **Add context** - Use annotations to capture strategic insights
-6. **Iterate** - Wardley Maps evolve as your understanding deepens
-
----
-
-## Learn More About Wardley Mapping
-
-- **Official site**: https://wardleymaps.com/
-- **Book**: "Wardley Maps" by Simon Wardley (free online)
-- **Community**: [Map Camp](https://www.map-camp.com/)
-
----
-
-## Support & Feedback
-
-Found a bug? Have a suggestion?
-- **Report issues**: [GitHub Issues](https://github.com/BlockSecCA/wardley_map_simple_obsidian_plugin/issues)
-- **Contribute**: Pull requests welcome!
-
----
-
-## About This Plugin
-
-**Syntax Specification**: This plugin implements the [Wardley Inline Syntax Specification](./Wardley-Inline-Syntax-Specification.md)
-
-**License**: MIT
-
-**Credits**: Wardley Mapping methodology by [Simon Wardley](https://twitter.com/swardley)
-
----
-
-**Ready to map your strategy?** Create a new note, add a `wardley` code block, and start visualizing your landscape! 🗺️
+MIT
 
 ## Author
 
 Carlos - BlockSecCA
-

@@ -1,6 +1,22 @@
 /* Wardley Map Simple Plugin Styles */
 
+/* CSS custom properties for theming (override in Obsidian CSS snippets) */
 .wardley-map-container {
+	--wardley-genesis-fill: #FF6B6B;
+	--wardley-genesis-stroke: #C92A2A;
+	--wardley-custom-fill: #4ECDC4;
+	--wardley-custom-stroke: #0B7285;
+	--wardley-product-fill: #45B7D1;
+	--wardley-product-stroke: #1971C2;
+	--wardley-commodity-fill: #96CEB4;
+	--wardley-commodity-stroke: #2F9E44;
+	--wardley-edge-color: #4A90E2;
+	--wardley-evolution-color: #9B59B6;
+	--wardley-bg: white;
+	--wardley-grid-color: #e0e0e0;
+	--wardley-text-color: #000;
+	--wardley-label-color: #333;
+	--wardley-muted-color: #666;
 	margin: 1em 0;
 	padding: 0;
 	text-align: center;
@@ -9,9 +25,9 @@
 .wardley-map-container svg {
 	max-width: 100%;
 	height: auto;
-	border: 1px solid #e0e0e0;
+	border: 1px solid var(--wardley-grid-color);
 	border-radius: 4px;
-	background: white;
+	background: var(--wardley-bg);
 }
 
 .wardley-map-error {

@@ -1,11 +1,12 @@
 {
 	"name": "wardley-map-simple",
-	"version": "1.0.0",
+	"version": "2.0.0",
 	"description": "Render Wardley Maps from inline code blocks using declarative syntax",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
-		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production"
+		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
+		"test": "node --test test.mts"
 	},
 	"keywords": [
 		"obsidian",

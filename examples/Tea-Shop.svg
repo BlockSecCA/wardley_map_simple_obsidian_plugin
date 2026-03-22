@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" class="wardley-map">
+<defs>
+		<marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto" markerUnits="strokeWidth">
+			<polygon points="0 0, 10 3.5, 0 7" fill="#4A90E2" />
+		</marker>
+		<marker id="arrowhead-evolution" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto" markerUnits="strokeWidth">
+			<polygon points="0 0, 10 3.5, 0 7" fill="#9B59B6" />
+		</marker>
+		<marker id="arrowhead-flow" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto" markerUnits="strokeWidth">
+			<polygon points="0 0, 10 3.5, 0 7" fill="#E67E22" />
+		</marker>
+		<marker id="arrowhead-flow-start" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto" markerUnits="strokeWidth">
+			<polygon points="10 0, 0 3.5, 10 7" fill="#E67E22" />
+		</marker>
+	</defs>
+<rect width="800" height="600" fill="white" class="wardley-background"/>
+<line x1="145" y1="60" x2="145" y2="540" stroke="#e0e0e0" stroke-width="1" stroke-dasharray="4,4" class="wardley-grid"/>
+<text x="145" y="570" text-anchor="middle" font-size="11" fill="#666" class="wardley-stage-label">Genesis</text>
+<line x1="315" y1="60" x2="315" y2="540" stroke="#e0e0e0" stroke-width="1" stroke-dasharray="4,4" class="wardley-grid"/>
+<text x="315" y="570" text-anchor="middle" font-size="11" fill="#666" class="wardley-stage-label">Custom Built</text>
+<line x1="485" y1="60" x2="485" y2="540" stroke="#e0e0e0" stroke-width="1" stroke-dasharray="4,4" class="wardley-grid"/>
+<text x="485" y="570" text-anchor="middle" font-size="11" fill="#666" class="wardley-stage-label">Product</text>
+<line x1="655" y1="60" x2="655" y2="540" stroke="#e0e0e0" stroke-width="1" stroke-dasharray="4,4" class="wardley-grid"/>
+<text x="655" y="570" text-anchor="middle" font-size="11" fill="#666" class="wardley-stage-label">Commodity</text>
+<text x="400" y="590" text-anchor="middle" font-size="12" font-weight="bold" fill="#333" class="wardley-axis-label">Evolution →</text>
+<text x="20" y="300" text-anchor="middle" font-size="12" font-weight="bold" fill="#333" transform="rotate(-90, 20, 300)" class="wardley-axis-label">Value Chain ↑</text>
+<text x="400" y="30" text-anchor="middle" font-size="18" font-weight="bold" fill="#000" class="wardley-title">Tea Shop</text>
+<line x1="322.1045646588216" y1="63.67765699986058" x2="477.8954353411784" y2="144.32234300013943" stroke="#4A90E2" stroke-width="2" marker-end="url(#arrowhead)" class="wardley-edge wardley-dependency"/>
+<line x1="647.8954353411784" y1="63.67765699986058" x2="492.1045646588216" y2="144.32234300013943" stroke="#4A90E2" stroke-width="2" marker-end="url(#arrowhead)" class="wardley-edge wardley-dependency"/>
+<line x1="491.61198341000534" y1="152.50351811207796" x2="607.5880165899946" y2="231.49648188792204" stroke="#4A90E2" stroke-width="2" marker-end="url(#arrowhead)" class="wardley-edge wardley-dependency"/>
+<line x1="492.1045646588216" y1="151.67765699986057" x2="647.8954353411784" y2="232.32234300013943" stroke="#4A90E2" stroke-width="2" marker-end="url(#arrowhead)" class="wardley-edge wardley-dependency"/>
+<line x1="492.3825414291226" y1="151.08189585276466" x2="688.4174585708774" y2="232.91810414723534" stroke="#4A90E2" stroke-width="2" marker-end="url(#arrowhead)" class="wardley-edge wardley-dependency"/>
+<line x1="692.4349871709956" y1="243.2578708076567" x2="658.3650128290045" y2="316.7421291923433" stroke="#4A90E2" stroke-width="2" marker-end="url(#arrowhead)" class="wardley-edge wardley-dependency"/>
+<line x1="688.005422773169" y1="237.8012678465366" x2="322.79457722683105" y2="322.1987321534634" stroke="#4A90E2" stroke-width="2" marker-end="url(#arrowhead)" class="wardley-edge wardley-dependency"/>
+<line x1="322.74479434255574" y1="326.0045350063086" x2="647.2552056574442" y2="409.9954649936914" stroke="#4A90E2" stroke-width="2" marker-end="url(#arrowhead)" class="wardley-edge wardley-dependency"/>
+<line x1="323" y1="324" x2="477" y2="324" stroke="#9B59B6" stroke-width="2" stroke-dasharray="5,5" marker-end="url(#arrowhead-evolution)" class="wardley-edge wardley-evolution"/>
+<circle cx="315" cy="60" r="8" fill="#4ECDC4" stroke="#0B7285" stroke-width="2" class="wardley-node wardley-anchor"/>
+<text x="315" y="47" text-anchor="middle" font-size="12" font-weight="bold" fill="#000" class="wardley-label">Business</text>
+<circle cx="655" cy="60" r="8" fill="#96CEB4" stroke="#2F9E44" stroke-width="2" class="wardley-node wardley-anchor"/>
+<text x="655" y="47" text-anchor="middle" font-size="12" font-weight="bold" fill="#000" class="wardley-label">Public</text>
+<circle cx="485" cy="148" r="8" fill="#45B7D1" stroke="#1971C2" stroke-width="2" class="wardley-node wardley-component wardley-stage-product"/>
+<text x="485" y="135" text-anchor="middle" font-size="12" font-weight="bold" fill="#000" class="wardley-label">Cup of Tea</text>
+<circle cx="614.1999999999999" cy="236" r="8" fill="#96CEB4" stroke="#2F9E44" stroke-width="2" class="wardley-node wardley-component wardley-stage-commodity"/>
+<text x="614.1999999999999" y="223" text-anchor="middle" font-size="12" font-weight="bold" fill="#000" class="wardley-label">Cup</text>
+<circle cx="655" cy="236" r="8" fill="#96CEB4" stroke="#2F9E44" stroke-width="2" class="wardley-node wardley-component wardley-stage-commodity"/>
+<text x="655" y="223" text-anchor="middle" font-size="12" font-weight="bold" fill="#000" class="wardley-label">Tea</text>
+<circle cx="695.8000000000001" cy="236" r="8" fill="#96CEB4" stroke="#2F9E44" stroke-width="2" class="wardley-node wardley-component wardley-stage-commodity"/>
+<text x="695.8000000000001" y="223" text-anchor="middle" font-size="12" font-weight="bold" fill="#000" class="wardley-label">Hot Water</text>
+<circle cx="655" cy="324" r="8" fill="#96CEB4" stroke="#2F9E44" stroke-width="2" class="wardley-node wardley-component wardley-stage-commodity"/>
+<text x="655" y="311" text-anchor="middle" font-size="12" font-weight="bold" fill="#000" class="wardley-label">Water</text>
+<circle cx="315" cy="324" r="8" fill="#4ECDC4" stroke="#0B7285" stroke-width="2" class="wardley-node wardley-component wardley-stage-custom"/>
+<text x="315" y="311" text-anchor="middle" font-size="12" font-weight="bold" fill="#000" class="wardley-label">Kettle</text>
+<circle cx="485" cy="324" r="8" fill="#45B7D1" stroke="#1971C2" stroke-width="2" class="wardley-node wardley-component wardley-stage-product"/>
+<text x="485" y="311" text-anchor="middle" font-size="12" font-weight="bold" fill="#000" class="wardley-label">Electric Kettle</text>
+<circle cx="655" cy="412" r="8" fill="#96CEB4" stroke="#2F9E44" stroke-width="2" class="wardley-node wardley-component wardley-stage-commodity"/>
+<text x="655" y="399" text-anchor="middle" font-size="12" font-weight="bold" fill="#000" class="wardley-label">Power</text>
+</svg>

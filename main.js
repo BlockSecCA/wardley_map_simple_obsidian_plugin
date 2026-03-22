@@ -30,37 +30,88 @@ module.exports = __toCommonJS(main_exports);
 var import_obsidian = require("obsidian");
 
 // src/parser.ts
+var VALID_STAGES = ["genesis", "custom", "product", "commodity"];
+var VALID_STRATEGIES = ["build", "buy", "outsource", "market"];
 function parseWardleyMap(source) {
+  var _a;
   const lines = source.split("\n");
   const errors = [];
   const map = {
     components: [],
     dependencies: [],
     evolutions: [],
+    evolveTos: [],
+    flows: [],
+    pipelines: [],
     annotations: [],
     notes: []
   };
   const componentMap = /* @__PURE__ */ new Map();
+  let currentPipeline = null;
   for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
+    const rawLine = lines[i];
+    const line = rawLine.trim();
     const lineNum = i + 1;
-    if (!line || line.startsWith("#"))
+    const isIndented = rawLine.length > 0 && (rawLine.startsWith("	") || rawLine.startsWith("  "));
+    if (!line || line.startsWith("#")) {
+      if (currentPipeline)
+        currentPipeline = null;
       continue;
+    }
+    if (currentPipeline) {
+      if (isIndented) {
+        const pipeCompMatch = line.match(
+          /^component\s+(.+?)\s+\[(\w+)\]$/
+        );
+        if (pipeCompMatch) {
+          const name = pipeCompMatch[1].trim();
+          const stage = pipeCompMatch[2];
+          if (!isValidStage(stage)) {
+            errors.push({
+              line: lineNum,
+              message: `Invalid evolution stage '${stage}' in pipeline component`
+            });
+            continue;
+          }
+          if (componentMap.has(name)) {
+            errors.push({
+              line: lineNum,
+              message: `Component '${name}' declared multiple times`
+            });
+            continue;
+          }
+          const component = { name, stage, isAnchor: false };
+          componentMap.set(name, component);
+          map.components.push(component);
+          currentPipeline.subComponents.push(name);
+          continue;
+        }
+      }
+      currentPipeline = null;
+    }
     try {
       if (line.startsWith("title ")) {
         map.title = line.substring(6).trim();
         continue;
       }
       const componentMatch = line.match(
-        /^component\s+(.+?)\s+\[(\w+)\]$/
+        /^component\s+(.+?)\s+\[(\w+)\](?:\s+\((\w+)\))?$/
       );
       if (componentMatch) {
         const name = componentMatch[1].trim();
         const stage = componentMatch[2];
+        const strategy = componentMatch[3];
         if (!isValidStage(stage)) {
           errors.push({
             line: lineNum,
             message: `Invalid evolution stage '${stage}'. Must be: genesis, custom, product, commodity`
+          });
+          continue;
+        }
+        if (strategy && !isValidStrategy(strategy)) {
+          errors.push({
+            line: lineNum,
+            message: `Invalid strategy '${strategy}'. Must be: build, buy, outsource, market`
           });
           continue;
         }
@@ -71,19 +122,29 @@ function parseWardleyMap(source) {
           });
           continue;
         }
-        const component = { name, stage, isAnchor: false };
+        const component = { name, stage, isAnchor: false, strategy };
         componentMap.set(name, component);
         map.components.push(component);
         continue;
       }
-      const anchorMatch = line.match(/^anchor\s+(.+?)\s+\[(\w+)\]$/);
+      const anchorMatch = line.match(
+        /^anchor\s+(.+?)\s+\[(\w+)\](?:\s+\((\w+)\))?$/
+      );
       if (anchorMatch) {
         const name = anchorMatch[1].trim();
         const stage = anchorMatch[2];
+        const strategy = anchorMatch[3];
         if (!isValidStage(stage)) {
           errors.push({
             line: lineNum,
             message: `Invalid evolution stage '${stage}'. Must be: genesis, custom, product, commodity`
+          });
+          continue;
+        }
+        if (strategy && !isValidStrategy(strategy)) {
+          errors.push({
+            line: lineNum,
+            message: `Invalid strategy '${strategy}'. Must be: build, buy, outsource, market`
           });
           continue;
         }
@@ -94,9 +155,23 @@ function parseWardleyMap(source) {
           });
           continue;
         }
-        const component = { name, stage, isAnchor: true };
+        const component = { name, stage, isAnchor: true, strategy };
         componentMap.set(name, component);
         map.components.push(component);
+        continue;
+      }
+      const inertiaMatch = line.match(/^inertia\s+(.+)$/);
+      if (inertiaMatch) {
+        const name = inertiaMatch[1].trim();
+        const comp = componentMap.get(name);
+        if (!comp) {
+          errors.push({
+            line: lineNum,
+            message: `Component '${name}' not declared`
+          });
+          continue;
+        }
+        comp.hasInertia = true;
         continue;
       }
       const evolveMatch = line.match(
@@ -136,6 +211,34 @@ function parseWardleyMap(source) {
           });
           continue;
         }
+        if (!isValidStage(stage)) {
+          errors.push({
+            line: lineNum,
+            message: `Invalid evolution stage '${stage}'`
+          });
+          continue;
+        }
+        map.evolveTos.push({ component: name, targetStage: stage });
+        continue;
+      }
+      const flowMatch = line.match(
+        /^(.+?)\s+\+(<?)(>?)\s+(.+?)(?:;\s*(.+))?$/
+      );
+      if (flowMatch && (flowMatch[2] || flowMatch[3])) {
+        const from = flowMatch[1].trim();
+        const hasLeft = flowMatch[2] === "<";
+        const hasRight = flowMatch[3] === ">";
+        const to = flowMatch[4].trim();
+        const label = (_a = flowMatch[5]) == null ? void 0 : _a.trim();
+        let direction;
+        if (hasLeft && hasRight) {
+          direction = "bidirectional";
+        } else if (hasLeft) {
+          direction = "backward";
+        } else {
+          direction = "forward";
+        }
+        map.flows.push({ from, to, direction, label });
         continue;
       }
       if (line.includes("->")) {
@@ -157,6 +260,20 @@ function parseWardleyMap(source) {
       }
       if (line.startsWith("note ")) {
         map.notes.push(line.substring(5).trim());
+        continue;
+      }
+      const pipelineMatch = line.match(/^pipeline\s+(.+)$/);
+      if (pipelineMatch) {
+        const parentName = pipelineMatch[1].trim();
+        if (!componentMap.has(parentName)) {
+          errors.push({
+            line: lineNum,
+            message: `Pipeline parent '${parentName}' not declared as a component`
+          });
+          continue;
+        }
+        currentPipeline = { parent: parentName, subComponents: [] };
+        map.pipelines.push(currentPipeline);
         continue;
       }
       if (line) {
@@ -186,6 +303,20 @@ function parseWardleyMap(source) {
       });
     }
   }
+  for (const flow of map.flows) {
+    if (!componentMap.has(flow.from)) {
+      errors.push({
+        line: 0,
+        message: `Flow references undeclared component '${flow.from}'`
+      });
+    }
+    if (!componentMap.has(flow.to)) {
+      errors.push({
+        line: 0,
+        message: `Flow references undeclared component '${flow.to}'`
+      });
+    }
+  }
   return {
     map: errors.length === 0 ? map : null,
     errors
@@ -212,7 +343,10 @@ function parseDependencyChain(line, lineNum, componentMap, dependencies, errors)
   }
 }
 function isValidStage(stage) {
-  return ["genesis", "custom", "product", "commodity"].includes(stage);
+  return VALID_STAGES.includes(stage);
+}
+function isValidStrategy(strategy) {
+  return VALID_STRATEGIES.includes(strategy);
 }
 
 // src/renderer.ts
@@ -255,52 +389,63 @@ function renderWardleyMap(map, options = {}) {
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" class="wardley-map">`
   );
   svg.push(`<defs>
-		<marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
-			<polygon points="0 0, 10 3, 0 6" fill="#4A90E2" />
+		<marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto" markerUnits="strokeWidth">
+			<polygon points="0 0, 10 3.5, 0 7" fill="#4A90E2" />
 		</marker>
-		<marker id="arrowhead-evolution" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
-			<polygon points="0 0, 10 3, 0 6" fill="#9B59B6" />
+		<marker id="arrowhead-evolution" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto" markerUnits="strokeWidth">
+			<polygon points="0 0, 10 3.5, 0 7" fill="#9B59B6" />
+		</marker>
+		<marker id="arrowhead-flow" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto" markerUnits="strokeWidth">
+			<polygon points="0 0, 10 3.5, 0 7" fill="#E67E22" />
+		</marker>
+		<marker id="arrowhead-flow-start" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto" markerUnits="strokeWidth">
+			<polygon points="10 0, 0 3.5, 10 7" fill="#E67E22" />
 		</marker>
 	</defs>`);
-  svg.push(`<rect width="${width}" height="${height}" fill="white"/>`);
+  svg.push(`<rect width="${width}" height="${height}" fill="white" class="wardley-background"/>`);
+  const px = (nx) => padding + nx * (width - 2 * padding);
+  const py = (ny) => padding + ny * (height - 2 * padding - 40);
   const stageY = height - padding + 30;
   const stages = ["genesis", "custom", "product", "commodity"];
   for (const stage of stages) {
-    const x = padding + STAGE_POSITIONS[stage] * (width - 2 * padding);
+    const x = px(STAGE_POSITIONS[stage]);
     svg.push(
-      `<line x1="${x}" y1="${padding}" x2="${x}" y2="${height - padding}" stroke="#e0e0e0" stroke-width="1" stroke-dasharray="4,4"/>`
+      `<line x1="${x}" y1="${padding}" x2="${x}" y2="${height - padding}" stroke="#e0e0e0" stroke-width="1" stroke-dasharray="4,4" class="wardley-grid"/>`
     );
     svg.push(
-      `<text x="${x}" y="${stageY}" text-anchor="middle" font-size="11" fill="#666">${STAGE_LABELS[stage]}</text>`
+      `<text x="${x}" y="${stageY}" text-anchor="middle" font-size="11" fill="#666" class="wardley-stage-label">${STAGE_LABELS[stage]}</text>`
     );
   }
   svg.push(
-    `<text x="${width / 2}" y="${height - 10}" text-anchor="middle" font-size="12" font-weight="bold" fill="#333">Evolution \u2192</text>`
+    `<text x="${width / 2}" y="${height - 10}" text-anchor="middle" font-size="12" font-weight="bold" fill="#333" class="wardley-axis-label">Evolution \u2192</text>`
   );
   svg.push(
-    `<text x="20" y="${height / 2}" text-anchor="middle" font-size="12" font-weight="bold" fill="#333" transform="rotate(-90, 20, ${height / 2})">Value Chain \u2191</text>`
+    `<text x="20" y="${height / 2}" text-anchor="middle" font-size="12" font-weight="bold" fill="#333" transform="rotate(-90, 20, ${height / 2})" class="wardley-axis-label">Value Chain \u2191</text>`
   );
   if (map.title) {
     svg.push(
-      `<text x="${width / 2}" y="30" text-anchor="middle" font-size="18" font-weight="bold" fill="#000">${escapeHtml(map.title)}</text>`
+      `<text x="${width / 2}" y="30" text-anchor="middle" font-size="18" font-weight="bold" fill="#000" class="wardley-title">${escapeHtml(map.title)}</text>`
     );
   }
   for (const dep of map.dependencies) {
     const fromComp = map.components.find((c) => c.name === dep.from);
     const toComp = map.components.find((c) => c.name === dep.to);
     if (fromComp && toComp && fromComp.x !== void 0 && fromComp.y !== void 0 && toComp.x !== void 0 && toComp.y !== void 0) {
-      const x1 = padding + fromComp.x * (width - 2 * padding);
-      const y1 = padding + fromComp.y * (height - 2 * padding - 40);
-      const x2 = padding + toComp.x * (width - 2 * padding);
-      const y2 = padding + toComp.y * (height - 2 * padding - 40);
+      const [x1, y1, x2, y2] = edgeCoords(
+        px(fromComp.x),
+        py(fromComp.y),
+        px(toComp.x),
+        py(toComp.y),
+        nodeRadius
+      );
       svg.push(
-        `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#4A90E2" stroke-width="2" marker-end="url(#arrowhead)"/>`
+        `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#4A90E2" stroke-width="2" marker-end="url(#arrowhead)" class="wardley-edge wardley-dependency"/>`
       );
       if (dep.label) {
         const midX = (x1 + x2) / 2;
         const midY = (y1 + y2) / 2;
         svg.push(
-          `<text x="${midX}" y="${midY - 5}" text-anchor="middle" font-size="10" fill="#666">${escapeHtml(dep.label)}</text>`
+          `<text x="${midX}" y="${midY - 5}" text-anchor="middle" font-size="10" fill="#666" class="wardley-edge-label">${escapeHtml(dep.label)}</text>`
         );
       }
     }
@@ -309,37 +454,135 @@ function renderWardleyMap(map, options = {}) {
     const fromComp = map.components.find((c) => c.name === evo.from);
     const toComp = map.components.find((c) => c.name === evo.to);
     if (fromComp && toComp && fromComp.x !== void 0 && fromComp.y !== void 0 && toComp.x !== void 0 && toComp.y !== void 0) {
-      const x1 = padding + fromComp.x * (width - 2 * padding);
-      const y1 = padding + fromComp.y * (height - 2 * padding - 40);
-      const x2 = padding + toComp.x * (width - 2 * padding);
-      const y2 = padding + toComp.y * (height - 2 * padding - 40);
+      const [x1, y1, x2, y2] = edgeCoords(
+        px(fromComp.x),
+        py(fromComp.y),
+        px(toComp.x),
+        py(toComp.y),
+        nodeRadius
+      );
       svg.push(
-        `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#9B59B6" stroke-width="2" stroke-dasharray="5,5" marker-end="url(#arrowhead-evolution)"/>`
+        `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#9B59B6" stroke-width="2" stroke-dasharray="5,5" marker-end="url(#arrowhead-evolution)" class="wardley-edge wardley-evolution"/>`
       );
     }
   }
-  for (const comp of map.components) {
-    if (comp.x === void 0 || comp.y === void 0) {
-      console.warn(`Skipping component ${comp.name} - x: ${comp.x}, y: ${comp.y}`);
-      continue;
+  for (const eto of map.evolveTos) {
+    const comp = map.components.find((c) => c.name === eto.component);
+    if (comp && comp.x !== void 0 && comp.y !== void 0) {
+      const x1 = px(comp.x) + nodeRadius;
+      const y1 = py(comp.y);
+      const x2 = px(STAGE_POSITIONS[eto.targetStage]);
+      const y2 = y1;
+      if (x2 > x1) {
+        svg.push(
+          `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#9B59B6" stroke-width="2" stroke-dasharray="5,5" marker-end="url(#arrowhead-evolution)" class="wardley-edge wardley-evolve-to"/>`
+        );
+        svg.push(
+          `<circle cx="${x2}" cy="${y2}" r="4" fill="white" stroke="#9B59B6" stroke-width="2" class="wardley-evolve-target"/>`
+        );
+      }
     }
-    const x = padding + comp.x * (width - 2 * padding);
-    const y = padding + comp.y * (height - 2 * padding - 40);
+  }
+  for (const flow of map.flows) {
+    const fromComp = map.components.find((c) => c.name === flow.from);
+    const toComp = map.components.find((c) => c.name === flow.to);
+    if (fromComp && toComp && fromComp.x !== void 0 && fromComp.y !== void 0 && toComp.x !== void 0 && toComp.y !== void 0) {
+      const [x1, y1, x2, y2] = edgeCoords(
+        px(fromComp.x),
+        py(fromComp.y),
+        px(toComp.x),
+        py(toComp.y),
+        nodeRadius
+      );
+      let markers = 'marker-end="url(#arrowhead-flow)"';
+      if (flow.direction === "backward") {
+        markers = 'marker-start="url(#arrowhead-flow-start)"';
+      } else if (flow.direction === "bidirectional") {
+        markers = 'marker-start="url(#arrowhead-flow-start)" marker-end="url(#arrowhead-flow)"';
+      }
+      svg.push(
+        `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#E67E22" stroke-width="2" ${markers} class="wardley-edge wardley-flow wardley-flow-${flow.direction}"/>`
+      );
+      if (flow.label) {
+        const midX = (x1 + x2) / 2;
+        const midY = (y1 + y2) / 2;
+        svg.push(
+          `<text x="${midX}" y="${midY - 5}" text-anchor="middle" font-size="10" fill="#E67E22" class="wardley-edge-label wardley-flow-label">${escapeHtml(flow.label)}</text>`
+        );
+      }
+    }
+  }
+  const pipelineBoxHeight = 30;
+  for (const pipeline of map.pipelines) {
+    const parent = map.components.find((c) => c.name === pipeline.parent);
+    if (!parent || parent.x === void 0 || parent.y === void 0)
+      continue;
+    if (pipeline.subComponents.length === 0)
+      continue;
+    const subs = pipeline.subComponents.map((n) => map.components.find((c) => c.name === n)).filter((c) => c !== void 0 && c.x !== void 0);
+    if (subs.length === 0)
+      continue;
+    const minX = Math.min(...subs.map((c) => px(c.x)));
+    const maxX = Math.max(...subs.map((c) => px(c.x)));
+    const centerY = py(parent.y);
+    const boxPad = 20;
+    const boxX = minX - boxPad;
+    const boxY = centerY - pipelineBoxHeight;
+    const boxW = maxX - minX + boxPad * 2;
+    const boxH = pipelineBoxHeight * 2;
+    svg.push(
+      `<rect x="${boxX}" y="${boxY}" width="${boxW}" height="${boxH}" rx="6" ry="6" fill="#f8f8f8" stroke="#999" stroke-width="1.5" stroke-dasharray="4,3" class="wardley-pipeline"/>`
+    );
+    svg.push(
+      `<text x="${boxX + boxW / 2}" y="${boxY - 6}" text-anchor="middle" font-size="11" font-weight="bold" fill="#555" class="wardley-pipeline-label">${escapeHtml(parent.name)}</text>`
+    );
+  }
+  const pipelineSubNames = new Set(
+    map.pipelines.flatMap((p) => p.subComponents)
+  );
+  const pipelineParentNames = new Set(
+    map.pipelines.map((p) => p.parent)
+  );
+  for (const comp of map.components) {
+    if (comp.x === void 0 || comp.y === void 0)
+      continue;
+    if (pipelineParentNames.has(comp.name))
+      continue;
+    const x = px(comp.x);
+    const y = py(comp.y);
     const colors = getStageColors(comp.stage);
-    const fillColor = colors.fill;
-    const strokeColor = colors.stroke;
+    const isPipelineSub = pipelineSubNames.has(comp.name);
+    const r = isPipelineSub ? nodeRadius - 2 : nodeRadius;
+    const nodeClass = comp.isAnchor ? "wardley-node wardley-anchor" : isPipelineSub ? `wardley-node wardley-pipeline-component wardley-stage-${comp.stage}` : `wardley-node wardley-component wardley-stage-${comp.stage}`;
     svg.push(
-      `<circle cx="${x}" cy="${y}" r="${nodeRadius}" fill="${fillColor}" stroke="${strokeColor}" stroke-width="2" class="${comp.isAnchor ? "anchor" : "component"}"/>`
+      `<circle cx="${x}" cy="${y}" r="${r}" fill="${colors.fill}" stroke="${colors.stroke}" stroke-width="2" class="${nodeClass}"/>`
     );
-    svg.push(
-      `<text x="${x}" y="${y - nodeRadius - 5}" text-anchor="middle" font-size="${fontSize}" font-weight="bold" fill="#000">${escapeHtml(comp.name)}</text>`
-    );
+    if (comp.strategy) {
+      svg.push(
+        `<text x="${x}" y="${y + r + 14}" text-anchor="middle" font-size="9" fill="#666" class="wardley-strategy">(${comp.strategy})</text>`
+      );
+    }
+    if (comp.hasInertia) {
+      const ix = x + r + 4;
+      svg.push(
+        `<line x1="${ix}" y1="${y - r}" x2="${ix}" y2="${y + r}" stroke="#333" stroke-width="4" class="wardley-inertia"/>`
+      );
+    }
+    if (isPipelineSub) {
+      svg.push(
+        `<text x="${x}" y="${y + r + 12}" text-anchor="middle" font-size="${fontSize - 2}" fill="#333" class="wardley-label wardley-pipeline-sub-label">${escapeHtml(comp.name)}</text>`
+      );
+    } else {
+      svg.push(
+        `<text x="${x}" y="${y - r - 5}" text-anchor="middle" font-size="${fontSize}" font-weight="bold" fill="#000" class="wardley-label">${escapeHtml(comp.name)}</text>`
+      );
+    }
   }
   if (map.annotations.length > 0) {
     let annotY = height - 35;
     for (const ann of map.annotations) {
       svg.push(
-        `<text x="${padding}" y="${annotY}" font-size="10" fill="#666">[${ann.id}] ${escapeHtml(ann.text)}</text>`
+        `<text x="${padding}" y="${annotY}" font-size="10" fill="#666" class="wardley-annotation">[${ann.id}] ${escapeHtml(ann.text)}</text>`
       );
       annotY += 12;
     }
@@ -350,16 +593,33 @@ function renderWardleyMap(map, options = {}) {
 function getStageColors(stage) {
   return STAGE_COLORS[stage];
 }
+function edgeCoords(cx1, cy1, cx2, cy2, radius) {
+  const dx = cx2 - cx1;
+  const dy = cy2 - cy1;
+  const len = Math.sqrt(dx * dx + dy * dy);
+  if (len === 0)
+    return [cx1, cy1, cx2, cy2];
+  const ux = dx / len;
+  const uy = dy / len;
+  return [
+    cx1 + ux * radius,
+    cy1 + uy * radius,
+    cx2 - ux * radius,
+    cy2 - uy * radius
+  ];
+}
 function calculatePositions(map) {
   var _a;
   for (const comp of map.components) {
     comp.x = STAGE_POSITIONS[comp.stage];
   }
-  const layers = topologicalSort(map.components, map.dependencies);
-  const maxLayer = Math.max(...layers.values(), 0);
+  const depths = longestPathFromRoot(map.components, map.dependencies);
+  const maxDepth = Math.max(...depths.values(), 0);
   for (const comp of map.components) {
-    const layer = (_a = layers.get(comp.name)) != null ? _a : 0;
-    comp.y = (maxLayer - layer) / (maxLayer + 1);
+    const depth = (_a = depths.get(comp.name)) != null ? _a : 0;
+    comp.y = maxDepth > 0 ? depth / (maxDepth + 1) : 0;
+  }
+  for (const comp of map.components) {
     if (comp.isAnchor) {
       comp.y = 0;
     }
@@ -371,24 +631,50 @@ function calculatePositions(map) {
       targetComp.y = sourceComp.y;
     }
   }
-  spreadOverlappingComponents(map.components);
-  for (const comp of map.components) {
-    console.log(`Component: ${comp.name}, x: ${comp.x}, y: ${comp.y}, stage: ${comp.stage}, isAnchor: ${comp.isAnchor}`);
+  for (const pipeline of map.pipelines) {
+    const parent = map.components.find((c) => c.name === pipeline.parent);
+    if (parent && parent.y !== void 0) {
+      for (const subName of pipeline.subComponents) {
+        const sub = map.components.find((c) => c.name === subName);
+        if (sub) {
+          sub.y = parent.y;
+        }
+      }
+    }
   }
+  const pipelineSubNames = new Set(
+    map.pipelines.flatMap((p) => p.subComponents)
+  );
+  const spreadable = map.components.filter((c) => !pipelineSubNames.has(c.name));
+  spreadOverlappingComponents(spreadable, map.dependencies);
 }
-function spreadOverlappingComponents(components) {
-  var _a;
+function spreadOverlappingComponents(components, dependencies) {
+  var _a, _b, _c;
+  const neighbors = /* @__PURE__ */ new Map();
+  for (const comp of components) {
+    neighbors.set(comp.name, []);
+  }
+  for (const dep of dependencies) {
+    (_a = neighbors.get(dep.from)) == null ? void 0 : _a.push(dep.to);
+    (_b = neighbors.get(dep.to)) == null ? void 0 : _b.push(dep.from);
+  }
   const groups = /* @__PURE__ */ new Map();
   for (const comp of components) {
-    const key = `${(_a = comp.y) == null ? void 0 : _a.toFixed(3)}_${comp.stage}`;
+    const key = `${(_c = comp.y) == null ? void 0 : _c.toFixed(3)}_${comp.stage}`;
     if (!groups.has(key)) {
       groups.set(key, []);
     }
     groups.get(key).push(comp);
   }
-  for (const [key, group] of groups) {
+  for (const [, group] of groups) {
     if (group.length > 1) {
       const baseX = group[0].x;
+      const compByName = new Map(components.map((c) => [c.name, c]));
+      group.sort((a, b) => {
+        const avgA = averageNeighborX(a.name, neighbors, compByName);
+        const avgB = averageNeighborX(b.name, neighbors, compByName);
+        return avgA - avgB;
+      });
       const baseSpread = 0.12;
       const spreadMultiplier = Math.max(1, group.length / 3);
       const spreadRange = baseSpread * spreadMultiplier;
@@ -399,40 +685,69 @@ function spreadOverlappingComponents(components) {
     }
   }
 }
-function topologicalSort(components, dependencies) {
-  var _a, _b, _c, _d, _e, _f;
-  const layers = /* @__PURE__ */ new Map();
-  const inDegree = /* @__PURE__ */ new Map();
-  const graph = /* @__PURE__ */ new Map();
-  for (const comp of components) {
-    inDegree.set(comp.name, 0);
-    graph.set(comp.name, []);
-  }
-  for (const dep of dependencies) {
-    (_a = graph.get(dep.to)) == null ? void 0 : _a.push(dep.from);
-    inDegree.set(dep.from, ((_b = inDegree.get(dep.from)) != null ? _b : 0) + 1);
-  }
-  const queue = [];
-  for (const comp of components) {
-    if (inDegree.get(comp.name) === 0) {
-      queue.push(comp.name);
-      layers.set(comp.name, 0);
+function averageNeighborX(name, neighbors, compByName) {
+  var _a, _b, _c;
+  const neighNames = (_a = neighbors.get(name)) != null ? _a : [];
+  let sum = 0;
+  let count = 0;
+  for (const n of neighNames) {
+    const nc = compByName.get(n);
+    if (nc && nc.x !== void 0) {
+      sum += nc.x;
+      count++;
     }
   }
+  if (count === 0) {
+    return (_c = (_b = compByName.get(name)) == null ? void 0 : _b.x) != null ? _c : 0.5;
+  }
+  return sum / count;
+}
+function longestPathFromRoot(components, dependencies) {
+  var _a, _b, _c, _d;
+  const depths = /* @__PURE__ */ new Map();
+  const children = /* @__PURE__ */ new Map();
+  const hasParent = /* @__PURE__ */ new Set();
+  for (const comp of components) {
+    children.set(comp.name, []);
+  }
+  for (const dep of dependencies) {
+    (_a = children.get(dep.from)) == null ? void 0 : _a.push(dep.to);
+    hasParent.add(dep.to);
+  }
+  const roots = [];
+  for (const comp of components) {
+    if (comp.isAnchor || !hasParent.has(comp.name)) {
+      roots.push(comp.name);
+      depths.set(comp.name, 0);
+    }
+  }
+  const queue = [...roots];
   while (queue.length > 0) {
     const current = queue.shift();
-    const currentLayer = (_c = layers.get(current)) != null ? _c : 0;
-    for (const neighbor of (_d = graph.get(current)) != null ? _d : []) {
-      const newDegree = ((_e = inDegree.get(neighbor)) != null ? _e : 0) - 1;
-      inDegree.set(neighbor, newDegree);
-      const neighborLayer = (_f = layers.get(neighbor)) != null ? _f : 0;
-      layers.set(neighbor, Math.max(neighborLayer, currentLayer + 1));
-      if (newDegree === 0) {
-        queue.push(neighbor);
+    const currentDepth = (_b = depths.get(current)) != null ? _b : 0;
+    for (const child of (_c = children.get(current)) != null ? _c : []) {
+      const prevDepth = (_d = depths.get(child)) != null ? _d : -1;
+      const newDepth = currentDepth + 1;
+      if (newDepth > prevDepth) {
+        depths.set(child, newDepth);
+        queue.push(child);
       }
     }
   }
-  return layers;
+  const stageDepths = {
+    genesis: 1,
+    custom: 2,
+    product: 3,
+    commodity: 4
+  };
+  const maxDepth = Math.max(...depths.values(), 0);
+  for (const comp of components) {
+    if (!depths.has(comp.name)) {
+      const ratio = maxDepth > 0 ? stageDepths[comp.stage] / 5 : stageDepths[comp.stage] / 5;
+      depths.set(comp.name, Math.round(ratio * (maxDepth || 4)));
+    }
+  }
+  return depths;
 }
 function escapeHtml(text) {
   return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");

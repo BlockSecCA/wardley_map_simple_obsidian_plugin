@@ -1,7 +1,7 @@
 {
 	"id": "wardley-map-simple",
 	"name": "Wardley Map Simple",
-	"version": "1.0.0",
+	"version": "2.0.0",
 	"minAppVersion": "1.0.0",
 	"description": "Render Wardley Maps from inline code blocks using declarative syntax",
 	"author": "BlockSecCA",
