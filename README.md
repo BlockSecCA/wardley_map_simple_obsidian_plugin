@@ -1,7 +1,6 @@
 # Wardley Map Simple - Obsidian Plugin
 
 [![Version](https://img.shields.io/github/v/release/BlockSecCA/wardley_map_simple_obsidian_plugin?label=version)](https://github.com/BlockSecCA/wardley_map_simple_obsidian_plugin/releases)
-[![License](https://img.shields.io/github/license/BlockSecCA/wardley_map_simple_obsidian_plugin)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)](src/)
 [![Obsidian](https://img.shields.io/badge/Obsidian-plugin-7C3AED?logo=obsidian&logoColor=white)](https://obsidian.md)
 [![Tests](https://img.shields.io/badge/tests-65%20passing-brightgreen)](test.mts)
