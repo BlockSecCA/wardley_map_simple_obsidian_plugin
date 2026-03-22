@@ -30,6 +30,6 @@ yarn-error.log*
 # Obsidian trash
 .trash/
 
-# Generated SVGs (except the example kept for README)
+# Generated SVGs (except examples kept for README)
 *.svg
-!examples/Tea-Shop.svg
+!examples/*.svg

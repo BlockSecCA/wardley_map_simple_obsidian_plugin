@@ -2,8 +2,6 @@
 
 Create Wardley Maps in Obsidian using declarative syntax. No coordinates, no manual positioning: describe your components and dependencies, and the plugin handles the layout.
 
-![Tea Shop Example](examples/Tea-Shop.svg)
-
 ## Installation
 
 1. Download the latest release ZIP from GitHub
@@ -25,6 +23,8 @@ component Cloud Platform [commodity]
 User Need -> Our App -> Cloud Platform
 ```
 ````
+
+![Quick Start](examples/quick-start.svg)
 
 The plugin renders the map automatically. Components are positioned by evolution stage (X-axis) and dependency depth (Y-axis).
 
@@ -136,11 +136,9 @@ evolve Kettle -> Electric Kettle [product]
 ```
 ````
 
-This produces the map shown at the top of this README, with:
-- User needs (Business, Public) at the top
-- Value chain flowing downward to infrastructure (Power)
-- Components color-coded by evolution stage
-- Evolution arrow from Kettle to Electric Kettle
+![Tea Shop](examples/Tea-Shop.svg)
+
+User needs (Business, Public) at the top, value chain flowing downward to infrastructure (Power), components color-coded by evolution stage, evolution arrow from Kettle to Electric Kettle.
 
 ### Database Pipeline
 
@@ -162,6 +160,10 @@ Business -> Service
 Service -> Database
 ```
 ````
+
+![Database Pipeline](examples/pipeline-example.svg)
+
+The pipeline box shows Database existing across multiple evolution stages simultaneously, from File Storage (genesis) through to Cloud DB (commodity).
 
 More examples in the [`examples/`](./examples/) folder.
 
@@ -198,7 +200,7 @@ npm run dev         # watch mode
 
 **Project structure:**
 - `src/` -- TypeScript source (parser, renderer, types, plugin entry)
-- `examples/` -- sample Wardley Map definitions
+- `examples/` -- sample Wardley Map definitions with SVG output
 - `tools/` -- standalone SVG generator and validators
 - `test.mts` -- test suite (Node built-in test runner)
 
